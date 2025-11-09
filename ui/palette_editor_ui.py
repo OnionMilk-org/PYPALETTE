@@ -488,7 +488,13 @@ class PaletteEditor(QMainWindow):
                             )
                             
                             if reply == QMessageBox.Yes:
-                                from io.pmap_format import get_palette_from_pmap
+                                import os
+                                parent_dir = os.path.dirname(os.path.dirname(__file__))
+                                pmap_module_path = os.path.join(parent_dir, 'io', 'pmap_format.py')
+                                spec = __import__('importlib.util').util.spec_from_file_location("pmap_format", pmap_module_path)
+                                pmap_module = __import__('importlib.util').util.module_from_spec(spec)
+                                spec.loader.exec_module(pmap_module)
+                                get_palette_from_pmap = pmap_module.get_palette_from_pmap
                                 
                                 # Decode PMAP using new format
                                 pmap_string = img.text['PMAP']
@@ -539,18 +545,36 @@ class PaletteEditor(QMainWindow):
             # For PNG files, save with embedded PMAP if palette exists
             if filename.lower().endswith('.png') and self.palettes and self.palettes[self.current_palette_index]:
                 try:
-                    from io.pmap_format import encode_pmap
+                    import sys
+                    import os
+                    parent_dir = os.path.dirname(os.path.dirname(__file__))
+                    pmap_module_path = os.path.join(parent_dir, 'io', 'pmap_format.py')
+                    spec = __import__('importlib.util').util.spec_from_file_location("pmap_format", pmap_module_path)
+                    pmap_module = __import__('importlib.util').util.module_from_spec(spec)
+                    spec.loader.exec_module(pmap_module)
+                    encode_pmap = pmap_module.encode_pmap
+                    import tempfile
+                    import shutil
                     
                     # Encode PMAP using new format
                     current_palette = self.palettes[self.current_palette_index]
                     pmap_string = encode_pmap(self.image, current_palette)
                     
-                    # Create PNG info with PMAP chunk
+                    # Save image first to temporary file
+                    with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as temp_file:
+                        temp_filename = temp_file.name
+                        self.image.save(temp_filename, "PNG")
+                    
+                    # Reload and add PMAP at the end
+                    from PIL import Image
+                    img_with_pmap = Image.open(temp_filename)
                     pnginfo = PngInfo()
                     pnginfo.add_text("PMAP", pmap_string)
+                    img_with_pmap.save(filename, "PNG", pnginfo=pnginfo)
                     
-                    # Save with embedded PMAP
-                    self.image.save(filename, "PNG", pnginfo=pnginfo)
+                    # Clean up temp file
+                    import os
+                    os.unlink(temp_filename)
                     
                     self.settings_manager.save_last_directory('save_image', filename)
                     self.statusBar().showMessage(f'Image saved with embedded PMAP', 3000)
@@ -935,7 +959,13 @@ class PaletteEditor(QMainWindow):
                         )
                         
                         if reply == QMessageBox.Yes:
-                            from io.pmap_format import get_palette_from_pmap
+                            import os
+                            parent_dir = os.path.dirname(os.path.dirname(__file__))
+                            pmap_module_path = os.path.join(parent_dir, 'io', 'pmap_format.py')
+                            spec = __import__('importlib.util').util.spec_from_file_location("pmap_format", pmap_module_path)
+                            pmap_module = __import__('importlib.util').util.module_from_spec(spec)
+                            spec.loader.exec_module(pmap_module)
+                            get_palette_from_pmap = pmap_module.get_palette_from_pmap
                             
                             # Decode PMAP using new format
                             pmap_string = img.text['PMAP']
@@ -1059,7 +1089,13 @@ class PaletteEditor(QMainWindow):
         
         if filename:
             try:
-                from io.pmap_format import encode_pmap
+                import os
+                parent_dir = os.path.dirname(os.path.dirname(__file__))
+                pmap_module_path = os.path.join(parent_dir, 'io', 'pmap_format.py')
+                spec = __import__('importlib.util').util.spec_from_file_location("pmap_format", pmap_module_path)
+                pmap_module = __import__('importlib.util').util.module_from_spec(spec)
+                spec.loader.exec_module(pmap_module)
+                encode_pmap = pmap_module.encode_pmap
                 
                 current_palette = self.palettes[self.current_palette_index]
                 
@@ -1088,7 +1124,13 @@ class PaletteEditor(QMainWindow):
         
         if filename:
             try:
-                from io.pmap_format import decode_pmap
+                import os
+                parent_dir = os.path.dirname(os.path.dirname(__file__))
+                pmap_module_path = os.path.join(parent_dir, 'io', 'pmap_format.py')
+                spec = __import__('importlib.util').util.spec_from_file_location("pmap_format", pmap_module_path)
+                pmap_module = __import__('importlib.util').util.module_from_spec(spec)
+                spec.loader.exec_module(pmap_module)
+                decode_pmap = pmap_module.decode_pmap
                 from PIL import Image
                 
                 # Load PMAP data
